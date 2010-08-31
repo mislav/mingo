@@ -6,7 +6,7 @@ Gem::Specification.new do |gem|
   gem.date    = Time.now.strftime('%Y-%m-%d')
   
   gem.add_dependency 'mongo', '>= 1.0'
-  gem.add_dependency 'hashie', '>= 0.3.1'
+  gem.add_dependency 'hashie', '>= 0.4.0'
   gem.add_development_dependency 'rspec', '~> 2.0.0.beta.20'
   
   gem.summary = "Minimal Mongo"
