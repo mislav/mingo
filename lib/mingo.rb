@@ -194,9 +194,11 @@ if $0 == __FILE__
       user = create :name => 'Mislav', :age => 26
       user.age = nil
       user.save
-      doc = described_class.first(user.id, :convert => nil)
-      doc.key?('age').should be_false
-      doc.key?('name').should be_true
+
+      raw_doc(user.id).tap do |doc|
+        doc.should_not have_key('age')
+        doc.should have_key('name')
+      end
     end
     
     it "finds a doc by string ID" do
@@ -217,6 +219,10 @@ if $0 == __FILE__
     
     def create(*args)
       described_class.create(*args)
+    end
+    
+    def raw_doc(selector)
+      described_class.first(selector, :convert => nil)
     end
   end
 end
