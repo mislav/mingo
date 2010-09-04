@@ -49,8 +49,8 @@ class Mingo < Hashie::Dash
       collection.find_one(id_or_selector, {:convert => self}.update(options))
     end
     
-    def find(selector = {}, options = {})
-      collection.find(selector, {:convert => self}.update(options))
+    def find(selector = {}, options = {}, &block)
+      collection.find(selector, {:convert => self}.update(options), &block)
     end
   end
   
