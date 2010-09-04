@@ -90,7 +90,7 @@ class Mingo < Hashie::Dash
 
   def save(options = {})
     if persisted?
-      update(update_values, options)
+      update(values_for_update, options)
     else
       self['_id'] = self.class.collection.insert(self.to_hash, options)
     end.
@@ -122,7 +122,7 @@ class Mingo < Hashie::Dash
   
   private
   
-  def update_values
+  def values_for_update
     changes.inject('$set' => {}, '$unset' => {}) do |doc, (key, values)|
       value = values[1]
       value.nil? ? (doc['$unset'][key] = 1) : (doc['$set'][key] = value)
