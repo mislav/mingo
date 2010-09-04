@@ -2,7 +2,7 @@ require 'mongo'
 require 'active_model'
 require 'hashie/dash'
 
-BSON::ObjectID.class_eval do
+BSON::ObjectId.class_eval do
   def self.[](id)
     self === id ? id : from_string(id)
   end
@@ -44,7 +44,7 @@ class Mingo < Hashie::Dash
     
     def first(id_or_selector = nil, options = {})
       unless id_or_selector.nil? or Hash === id_or_selector
-        id_or_selector = BSON::ObjectID[id_or_selector]
+        id_or_selector = BSON::ObjectId[id_or_selector]
       end
       collection.find_one(id_or_selector, {:convert => self}.update(options))
     end
@@ -60,7 +60,7 @@ class Mingo < Hashie::Dash
     @changes = Hash.new { |c, key| c[key] = [self[key]] }
     @destroyed = false
     
-    if obj and obj['_id'].is_a? BSON::ObjectID
+    if obj and obj['_id'].is_a? BSON::ObjectId
       # a doc loaded straight from the db
       merge!(obj)
     else
@@ -160,7 +160,7 @@ if $0 == __FILE__
       user.save
       user.should be_persisted
       user.should_not be_changed
-      user.id.should be_a(BSON::ObjectID)
+      user.id.should be_a(BSON::ObjectId)
     end
     
     it "has a human model name" do
