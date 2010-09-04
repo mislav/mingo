@@ -37,7 +37,7 @@ class Mingo
     private
     
     def convert_document(doc)
-      if @convert.nil? then doc
+      if @convert.nil? or doc.nil? then doc
       elsif @convert.respond_to?(:call) then @convert.call(doc)
       else @convert.new(doc)
       end

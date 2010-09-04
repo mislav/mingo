@@ -206,6 +206,11 @@ if $0 == __FILE__
       user_dup.name.should == 'Mislav'
     end
     
+    it "returns nil for non-existing doc" do
+      doc = described_class.first('nonexist' => 1)
+      doc.should be_nil
+    end
+    
     def build(*args)
       described_class.new(*args)
     end
