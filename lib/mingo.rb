@@ -52,6 +52,10 @@ class Mingo < Hashie::Dash
     def find(selector = {}, options = {}, &block)
       collection.find(selector, {:convert => self}.update(options), &block)
     end
+    
+    def create(obj = nil)
+      new(obj).tap { |doc| doc.save }
+    end
   end
   
   attr_reader :changes
@@ -168,8 +172,7 @@ if $0 == __FILE__
     end
     
     it "can reload values from the db" do
-      user = build :name => 'Mislav'
-      user.save
+      user = create :name => 'Mislav'
       user.update '$unset' => {:name => 1}, '$set' => {:age => 26}
       user.age.should be_nil
       user.reload
@@ -178,8 +181,7 @@ if $0 == __FILE__
     end
     
     it "saves only changed values" do
-      user = build :name => 'Mislav', :age => 26
-      user.save
+      user = create :name => 'Mislav', :age => 26
       user.update '$inc' => {:age => 1}
       user.name = 'Mislav2'
       user.save
@@ -189,8 +191,7 @@ if $0 == __FILE__
     end
     
     it "unsets values set to nil" do
-      user = build :name => 'Mislav', :age => 26
-      user.save
+      user = create :name => 'Mislav', :age => 26
       user.age = nil
       user.save
       doc = described_class.first(user.id, :convert => nil)
@@ -199,8 +200,7 @@ if $0 == __FILE__
     end
     
     it "finds a doc by string ID" do
-      user = build :name => 'Mislav'
-      user.save
+      user = create :name => 'Mislav'
       user_dup = described_class.first(user.id.to_s)
       user_dup.id.should == user.id
       user_dup.name.should == 'Mislav'
@@ -213,6 +213,10 @@ if $0 == __FILE__
     
     def build(*args)
       described_class.new(*args)
+    end
+    
+    def create(*args)
+      described_class.create(*args)
     end
   end
 end
