@@ -14,6 +14,7 @@ class Mingo < Hashie::Dash
   extend ActiveModel::Translation
   
   autoload :Cursor, 'mingo/cursor'
+  autoload :ManyProxy, 'mingo/many_proxy'
   
   class << self
     attr_writer :db, :collection
@@ -55,6 +56,16 @@ class Mingo < Hashie::Dash
     
     def create(obj = nil)
       new(obj).tap { |doc| doc.save }
+    end
+    
+    def many(property, model, &block)
+      proxy_class = block_given?? Class.new(ManyProxy, &block) : ManyProxy
+      ivar = "@#{property}"
+      
+      define_method(property) {
+        (instance_variable_defined?(ivar) && instance_variable_get(ivar)) ||
+          instance_variable_set(ivar, proxy_class.new(self, property, model))
+      }
     end
   end
   
