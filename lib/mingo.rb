@@ -72,6 +72,8 @@ class Mingo < Hashie::Dash
     end
   end
   
+  # overwrite these to avoid checking for declared properties
+  # (which is default behavior in Dash)
   def [](property)
     _regular_reader(property.to_s)
   end
