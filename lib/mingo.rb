@@ -120,6 +120,10 @@ class Mingo < Hashie::Dash
     changes.any?
   end
   
+  def ==(other)
+    other.is_a?(self.class) and other.id == self.id
+  end
+  
   private
   
   def values_for_update
@@ -211,6 +215,15 @@ if $0 == __FILE__
     it "returns nil for non-existing doc" do
       doc = described_class.first('nonexist' => 1)
       doc.should be_nil
+    end
+    
+    it "compares with another record" do
+      one = create :name => "One"
+      two = create :name => "Two"
+      one.should_not == two
+      
+      one_dup = described_class.first(one.id)
+      one_dup.should == one
     end
     
     def build(*args)
