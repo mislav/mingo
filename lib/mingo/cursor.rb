@@ -34,6 +34,10 @@ class Mingo
       convert_document super
     end
     
+    def empty?
+      !has_next?
+    end
+    
     private
     
     def convert_document(doc)
