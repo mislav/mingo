@@ -7,6 +7,10 @@ BSON::ObjectId.class_eval do
   def self.[](id)
     self === id ? id : from_string(id)
   end
+  
+  def id
+    self
+  end
 end
 
 class Mingo < Hashie::Dash
