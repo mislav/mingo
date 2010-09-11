@@ -48,6 +48,10 @@ class Mingo
     def object_ids
       @embedded
     end
+    
+    def include?(doc)
+      object_ids.include? convert(doc)
+    end
   
     def convert(doc)
       doc.id
@@ -66,6 +70,10 @@ class Mingo
       @parent.update '$pull' => { @property => doc }
       unload_collection
       @embedded.delete doc
+    end
+    
+    def loaded?
+      !!@collection
     end
   
     private
