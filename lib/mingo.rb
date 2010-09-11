@@ -1,3 +1,4 @@
+require 'active_support/core_ext/hash/conversions'
 require 'mongo'
 require 'active_model'
 require 'hashie/dash'
@@ -72,7 +73,7 @@ class Mingo < Hashie::Dash
   attr_reader :changes
   
   def initialize(obj = nil)
-    @changes = Hash.new { |c, key| c[key] = [self[key]] }
+    @changes = {}
     @destroyed = false
     
     if obj and obj['_id'].is_a? BSON::ObjectId
@@ -92,6 +93,10 @@ class Mingo < Hashie::Dash
   def []=(property, value)
     _regular_writer(property.to_s, value)
   end
+  
+  # keys are already strings
+  def stringify_keys() self end
+  alias :stringify_keys! :stringify_keys
   
   def id
     self['_id']
@@ -148,9 +153,16 @@ class Mingo < Hashie::Dash
   end
   
   def _regular_writer(key, value)
-    old_value = _regular_reader(key)
-    changes[key.to_sym][1] = value unless value == old_value
+    track_change(key, value)
     super
+  end
+  
+  def track_change(key, value)
+    old_value = _regular_reader(key)
+    unless value == old_value
+      memo = (changes[key.to_sym] ||= [old_value])
+      memo[0] == value ? changes.delete(key.to_sym) : (memo[1] = value)
+    end
   end
 end
 
@@ -169,9 +181,18 @@ if $0 == __FILE__
       User.collection.remove
     end
     
+    it "obtains an ID by saving" do
+      user = build :name => 'Mislav'
+      user.should_not be_persisted
+      user.id.should be_nil
+      user.save
+      raw_doc(user.id)['name'].should == 'Mislav'
+      user.should be_persisted
+      user.id.should be_a(BSON::ObjectId)
+    end
+    
     it "tracks changes attribute" do
       user = build
-      user.should_not be_persisted
       user.should_not be_changed
       user.name = 'Mislav'
       user.should be_changed
@@ -179,9 +200,15 @@ if $0 == __FILE__
       user.name = 'Mislav2'
       user.changes[:name].should == [nil, 'Mislav2']
       user.save
-      user.should be_persisted
       user.should_not be_changed
-      user.id.should be_a(BSON::ObjectId)
+    end
+    
+    it "forgets changed attribute when reset to original value" do
+      user = create :name => 'Mislav'
+      user.name = 'Mislav2'
+      user.should be_changed
+      user.name = 'Mislav'
+      user.should_not be_changed
     end
     
     it "has a human model name" do
@@ -218,11 +245,33 @@ if $0 == __FILE__
       end
     end
     
-    it "finds a doc by string ID" do
-      user = create :name => 'Mislav'
-      user_dup = described_class.first(user.id.to_s)
-      user_dup.id.should == user.id
-      user_dup.name.should == 'Mislav'
+    context "existing doc" do
+      before do
+        @id = described_class.collection.insert :name => 'Mislav', :age => 26
+      end
+      
+      it "finds a doc by string ID" do
+        user = described_class.first(@id.to_s)
+        user.id.should == @id
+        user.name.should == 'Mislav'
+        user.age.should == 26
+      end
+    
+      it "is unchanged after loading" do
+        user = described_class.first(@id)
+        user.should_not be_changed
+        user.age = 27
+        user.should be_changed
+        user.changes.keys.should == [:age]
+      end
+    
+      it "doesn't get changed by an inspect" do
+        user = described_class.first(@id)
+        # triggers AS stringify_keys, which dups the Dash and writes to it,
+        # which mutates the @changes hash from the original Dash
+        user.inspect
+        user.should_not be_changed
+      end
     end
     
     it "returns nil for non-existing doc" do
