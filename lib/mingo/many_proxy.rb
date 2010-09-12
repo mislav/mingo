@@ -75,6 +75,10 @@ class Mingo
     def loaded?
       !!@collection
     end
+    
+    def respond_to?(method, priv = false)
+      super || method_missing(:respond_to?, method, priv)
+    end
   
     private
   
