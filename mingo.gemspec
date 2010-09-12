@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |gem|
   gem.name    = 'mingo'
-  gem.version = '0.1.0'
+  gem.version = '0.1.1'
   gem.date    = Time.now.strftime('%Y-%m-%d')
   
   gem.add_dependency 'mongo', '>= 1.0'
