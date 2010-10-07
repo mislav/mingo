@@ -93,8 +93,12 @@ class Mingo
   
     def load_collection
       @collection ||= if @embedded.empty? then []
-      else @model.find({:_id => {'$in' => self.object_ids}}, find_options)
+      else find_by_ids(self.object_ids)
       end
+    end
+    
+    def find_by_ids(ids)
+      @model.find_by_ids(ids, {}, find_options)
     end
   end
 end

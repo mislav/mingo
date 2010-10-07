@@ -59,6 +59,25 @@ class Mingo < Hashie::Dash
       collection.find(selector, {:convert => self}.update(options), &block)
     end
     
+    def find_by_ids(object_ids, query = {}, options = {})
+      find({:_id => {'$in' => object_ids}}.update(query), options)
+    end
+    
+    def find_ordered_ids(object_ids, query = {}, options = {})
+      indexed = find_by_ids(object_ids, query, options).inject({}) do |hash, object|
+        hash[object.id] = object
+        hash
+      end
+      
+      object_ids.map { |id| indexed[id] }
+    end
+    
+    def paginate_ids(object_ids, paginate_options, options = {})
+      object_ids.paginate(paginate_options).tap do |collection|
+        collection.replace find_ordered_ids(collection, {}, options)
+      end
+    end
+    
     def create(obj = nil)
       new(obj).tap { |doc| doc.save }
     end
