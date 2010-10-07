@@ -79,7 +79,10 @@ class Mingo < Hashie::Dash
     end
     
     def create(obj = nil)
-      new(obj).tap { |doc| doc.save }
+      new(obj).tap do |object|
+        yield object if block_given?
+        object.save
+      end
     end
     
     def many(property, model, &block)
