@@ -43,7 +43,8 @@ class Mingo
       end
     end
   
-    undef :to_a, :inspect
+    undef :inspect
+    undef :to_a if instance_methods.include? 'to_a'
   
     def object_ids
       @embedded
