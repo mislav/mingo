@@ -16,13 +16,104 @@ class Mingo
       end
     end
     
-    def initialize(parent, property, model)
+    def initialize(parent, property, mapping)
       @parent = parent
       @property = property
-      @model = model
-      @collection = nil
-      @embedded = (@parent[@property] ||= [])
-      @parent.changes.delete(@property)
+      # TODO: ugh, improve naming
+      @model, @self_referencing_key, @forward_referencing_key = analyze_mapping mapping
+      @counter_cache_field = "#{@property}_count"
+      @join_loaded = nil
+      @loaded = nil
+    end
+  
+    undef :inspect
+    undef :to_a if instance_methods.include? 'to_a'
+  
+    def object_ids
+      join_docs = load_join
+      join_docs = join_docs.select(&Proc.new) if block_given?
+      join_docs.map { |doc| doc[@forward_referencing_key] }
+    end
+    
+    def size
+      (counter_cache? && counter_cache) || (@join_loaded && @join_loaded.size) || join_cursor.size
+    end
+    
+    def include?(doc)
+      !!find_join_doc(doc.id)
+    end
+  
+    def convert(doc)
+      {@self_referencing_key => @parent.id, @forward_referencing_key => doc.id}
+    end
+  
+    def <<(doc)
+      doc = convert(doc)
+      doc['_id'] = join_collection.save doc
+      change_counter_cache(1)
+      load_join << doc if @join_loaded
+      unload_collection
+      self
+    end
+  
+    def delete(doc)
+      doc = convert(doc)
+      if join_doc = find_join_doc(doc[@forward_referencing_key])
+        join_collection.remove :_id => join_doc['_id']
+        change_counter_cache(-1)
+        unload_collection
+        @join_loaded.delete join_doc
+      end
+      doc
+    end
+    
+    def loaded?
+      !!@loaded
+    end
+    
+    def find_by_ids(ids)
+      @model.find_by_ids(ids, {}, find_options)
+    end
+    
+    def respond_to?(method, priv = false)
+      super || method_missing(:respond_to?, method, priv)
+    end
+  
+    private
+  
+    def method_missing(method, *args, &block)
+      load_collection
+      @loaded.send(method, *args, &block)
+    end
+    
+    def join_collection
+      @join_collection ||= @parent.class.collection[@property.to_s]
+    end
+    
+    def counter_cache
+      @counter_cache ||= @parent[@counter_cache_field].to_i
+    end
+    
+    def counter_cache?
+      !!@parent[@counter_cache_field]
+    end
+    
+    def change_counter_cache(by)
+      @counter_cache = counter_cache + by
+      @parent.update '$inc' => { @counter_cache_field => by }
+    end
+    
+    # Example: {self => 'user_id', 'movie_id' => Movie}
+    def analyze_mapping(mapping)
+      model = self_referencing_key = forward_referencing_key = nil
+      mapping.each do |key, value|
+        if key == @parent.class then self_referencing_key = value.to_s
+        elsif value < Mingo
+          forward_referencing_key = key.to_s
+          model = value
+        end
+      end
+      [model, self_referencing_key, forward_referencing_key]
     end
     
     def find_options
@@ -34,7 +125,10 @@ class Mingo
           {:convert => lambda { |doc|
             @model.new(doc).tap do |obj|
               obj.extend decorator if decorator
-              decorate_block.call(obj, @embedded) if decorate_block
+              if decorate_block
+                join_doc = find_join_doc(doc['_id'])
+                decorate_block.call(obj, join_doc)
+              end
             end
           }}
         else
@@ -42,64 +136,28 @@ class Mingo
         end
       end
     end
-  
-    undef :inspect
-    undef :to_a if instance_methods.include? 'to_a'
-  
-    def object_ids
-      @embedded
+    
+    def load_join
+      @join_loaded ||= join_cursor.to_a
     end
     
-    def include?(doc)
-      object_ids.include? convert(doc)
-    end
-  
-    def convert(doc)
-      doc.id
-    end
-  
-    def <<(doc)
-      doc = convert(doc)
-      @parent.update '$addToSet' => { @property => doc }
-      unload_collection
-      @embedded << doc
-      self
-    end
-  
-    def delete(doc)
-      doc = convert(doc)
-      @parent.update '$pull' => { @property => doc }
-      unload_collection
-      @embedded.delete doc
+    def find_join_doc(forward_id)
+      load_join.find { |d| d[@forward_referencing_key] == forward_id }
     end
     
-    def loaded?
-      !!@collection
-    end
-    
-    def respond_to?(method, priv = false)
-      super || method_missing(:respond_to?, method, priv)
-    end
-  
-    private
-  
-    def method_missing(method, *args, &block)
-      load_collection
-      @collection.send(method, *args, &block)
-    end
-  
-    def unload_collection
-      @collection = nil
+    def join_cursor
+      # TODO: make options configurable
+      join_collection.find({@self_referencing_key => @parent.id}, :sort => '_id')
     end
   
     def load_collection
-      @collection ||= if @embedded.empty? then []
+      @loaded ||= if self.object_ids.empty? then []
       else find_by_ids(self.object_ids)
       end
     end
-    
-    def find_by_ids(ids)
-      @model.find_by_ids(ids, {}, find_options)
+  
+    def unload_collection
+      @loaded = nil
     end
   end
 end

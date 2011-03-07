@@ -104,13 +104,13 @@ class Mingo < Hashie::Dash
       end
     end
     
-    def many(property, model, &block)
+    def many(property, *args, &block)
       proxy_class = block_given?? Class.new(ManyProxy, &block) : ManyProxy
       ivar = "@#{property}"
       
       define_method(property) {
         (instance_variable_defined?(ivar) && instance_variable_get(ivar)) ||
-          instance_variable_set(ivar, proxy_class.new(self, property, model))
+          instance_variable_set(ivar, proxy_class.new(self, property, *args))
       }
     end
   end
