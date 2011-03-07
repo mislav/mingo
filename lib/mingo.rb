@@ -11,6 +11,25 @@ BSON::ObjectId.class_eval do
   def id
     self
   end
+  
+  def initialize(time_or_data = nil)
+    if Time === time_or_data or Date === time_or_data
+      @data = generate_from_time(time_or_data)
+    else
+      @data = time_or_data || generate
+    end
+  end
+  
+  private
+  
+  def generate_from_time(time)
+    oid = ''
+    oid += [time.to_i].pack("N")
+    oid += Digest::MD5.digest(Socket.gethostname)[0, 3]
+    oid += [Process.pid % 0xFFFF].pack("n")
+    oid += [get_inc].pack("N")[1, 3]
+    oid.unpack("C12")
+  end
 end
 
 class Mingo < Hashie::Dash
