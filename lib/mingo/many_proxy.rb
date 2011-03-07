@@ -36,7 +36,7 @@ class Mingo
     end
     
     def size
-      (counter_cache? && counter_cache) || (@join_loaded && @join_loaded.size) || join_cursor.size
+      (counter_cache? && counter_cache) || (@join_loaded && @join_loaded.size) || join_cursor.count
     end
     
     def include?(doc)
