@@ -2,6 +2,10 @@ require 'active_support/core_ext/hash/conversions'
 require 'mongo'
 require 'active_model'
 require 'hashie/dash'
+# for ObjectId:
+require 'thread'
+require 'socket'
+require 'digest/md5'
 
 BSON::ObjectId.class_eval do
   def self.[](id)
