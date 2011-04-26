@@ -22,6 +22,7 @@ class Mingo < Hashie::Dash
   autoload :Persistence,  'mingo/persistence'
   autoload :Callbacks,    'mingo/callbacks'
   autoload :Changes,      'mingo/changes'
+  autoload :Timestamps,   'mingo/timestamps'
   
   class << self
     attr_writer :db, :collection
