@@ -14,12 +14,14 @@ BSON::ObjectId.class_eval do
 end
 
 class Mingo < Hashie::Dash
-  # ActiveModel::Callbacks
   include ActiveModel::Conversion
   extend ActiveModel::Translation
   
-  autoload :Cursor, 'mingo/cursor'
-  autoload :ManyProxy, 'mingo/many_proxy'
+  autoload :Cursor,       'mingo/cursor'
+  autoload :ManyProxy,    'mingo/many_proxy'
+  autoload :Persistence,  'mingo/persistence'
+  autoload :Callbacks,    'mingo/callbacks'
+  autoload :Changes,      'mingo/changes'
   
   class << self
     attr_writer :db, :collection
@@ -78,13 +80,6 @@ class Mingo < Hashie::Dash
       end
     end
     
-    def create(obj = nil)
-      new(obj).tap do |object|
-        yield object if block_given?
-        object.save
-      end
-    end
-    
     def many(property, *args, &block)
       proxy_class = block_given?? Class.new(ManyProxy, &block) : ManyProxy
       ivar = "@#{property}"
@@ -96,18 +91,23 @@ class Mingo < Hashie::Dash
     end
   end
   
-  attr_reader :changes
-  
-  def initialize(obj = nil)
-    @changes = {}
-    @destroyed = false
-    
-    if obj and obj['_id'].is_a? BSON::ObjectId
-      # a doc loaded straight from the db
-      merge!(obj)
-    else
-      super
+  include Module.new {
+    def initialize(obj = nil)
+      if obj and obj['_id'].is_a? BSON::ObjectId
+        # a doc loaded straight from the db
+        merge!(obj)
+      else
+        super
+      end
     end
+  }
+  
+  include Persistence
+  include Callbacks
+  include Changes
+  
+  def id
+    self['_id']
   end
   
   # overwrite these to avoid checking for declared properties
@@ -124,71 +124,8 @@ class Mingo < Hashie::Dash
   def stringify_keys() self end
   alias :stringify_keys! :stringify_keys
   
-  def id
-    self['_id']
-  end
-  
-  def persisted?
-    !!id
-  end
-
-  def save(options = {})
-    if persisted?
-      update(values_for_update, options)
-    else
-      self['_id'] = self.class.collection.insert(self.to_hash, options)
-    end.
-      tap { changes.clear }
-  end
-  
-  def update(doc, options = {})
-    self.class.collection.update({'_id' => self.id}, doc, options)
-  end
-  
-  def reload
-    doc = self.class.first(id, :convert => nil)
-    replace doc
-  end
-
-  def destroy
-    self.class.collection.remove('_id' => self.id)
-    @destroyed = true
-    self.freeze
-  end
-  
-  def destroyed?
-    @destroyed
-  end
-  
-  def changed?
-    changes.any?
-  end
-  
   def ==(other)
     other.is_a?(self.class) and other.id == self.id
-  end
-  
-  private
-  
-  def values_for_update
-    changes.inject('$set' => {}, '$unset' => {}) do |doc, (key, values)|
-      value = values[1]
-      value.nil? ? (doc['$unset'][key] = 1) : (doc['$set'][key] = value)
-      doc
-    end
-  end
-  
-  def _regular_writer(key, value)
-    track_change(key, value)
-    super
-  end
-  
-  def track_change(key, value)
-    old_value = _regular_reader(key)
-    unless value == old_value
-      memo = (changes[key.to_sym] ||= [old_value])
-      memo[0] == value ? changes.delete(key.to_sym) : (memo[1] = value)
-    end
   end
 end
 
