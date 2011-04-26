@@ -25,7 +25,10 @@ class Mingo
 
       def save(options = {})
         if persisted?
-          update(values_for_update, options)
+          hash = values_for_update
+          unless %w[$set $unset] == hash.keys && hash.values.all? { |v| v.empty? }
+            update(hash, options)
+          end
         else
           self['_id'] = self.class.collection.insert(self.to_hash, options)
         end
