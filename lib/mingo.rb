@@ -55,11 +55,13 @@ class Mingo < Hashie::Dash
       unless id_or_selector.nil? or Hash === id_or_selector
         id_or_selector = BSON::ObjectId[id_or_selector]
       end
-      collection.find_one(id_or_selector, {:convert => self}.update(options))
+      options = { :transformer => lambda {|doc| self.new(doc)} }.update(options)
+      collection.find_one(id_or_selector, options)
     end
     
     def find(selector = {}, options = {}, &block)
-      collection.find(selector, {:convert => self}.update(options), &block)
+      options = { :transformer => lambda {|doc| self.new(doc)} }.update(options)
+      collection.find(selector, options, &block)
     end
     
     def find_by_ids(object_ids, query = {}, options = {})
@@ -252,6 +254,11 @@ if $0 == __FILE__
       one_dup.should == one
     end
     
+    it "returns a custom cursor" do
+      cursor = described_class.collection.find({})
+      cursor.should respond_to(:empty?)
+    end
+    
     def build(*args)
       described_class.new(*args)
     end
@@ -261,7 +268,7 @@ if $0 == __FILE__
     end
     
     def raw_doc(selector)
-      described_class.first(selector, :convert => nil)
+      described_class.first(selector, :transformer => nil)
     end
   end
 end

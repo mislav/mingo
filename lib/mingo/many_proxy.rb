@@ -122,7 +122,7 @@ class Mingo
         decorate_block = self.class.decorate_each
         
         if decorator or decorate_block
-          {:convert => lambda { |doc|
+          {:transformer => lambda { |doc|
             @model.new(doc).tap do |obj|
               obj.extend decorator if decorator
               if decorate_block

@@ -39,7 +39,7 @@ class Mingo
       end
 
       def reload
-        doc = self.class.first(id, :convert => nil)
+        doc = self.class.first(id, :transformer => nil)
         replace doc
       end
 
