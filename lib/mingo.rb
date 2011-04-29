@@ -18,80 +18,26 @@ class Mingo < Hashie::Dash
   extend ActiveModel::Translation
   
   autoload :Cursor,       'mingo/cursor'
+  autoload :Connection,   'mingo/connection'
+  autoload :Finders,      'mingo/finders'
   autoload :ManyProxy,    'mingo/many_proxy'
   autoload :Persistence,  'mingo/persistence'
   autoload :Callbacks,    'mingo/callbacks'
   autoload :Changes,      'mingo/changes'
   autoload :Timestamps,   'mingo/timestamps'
   
-  class << self
-    attr_writer :db, :collection
+  extend Connection
+  extend Finders
+
+  # highly experimental stuff
+  def self.many(property, *args, &block)
+    proxy_class = block_given?? Class.new(ManyProxy, &block) : ManyProxy
+    ivar = "@#{property}"
     
-    def db
-      @db || superclass.db
-    end
-    
-    def connect(dbname_or_uri)
-      self.collection = nil
-      self.db = if dbname_or_uri.index('mongodb://') == 0
-        connection = Mongo::Connection.from_uri(dbname_or_uri)
-        connection.db(connection.auths.last['db_name'])
-      else
-        Mongo::Connection.new.db(dbname_or_uri)
-      end
-    end
-    
-    def collection_name
-      self.name
-    end
-    
-    def collection
-      @collection ||= db.collection(collection_name).tap { |col|
-        col.extend Cursor::CollectionPlugin
-      }
-    end
-    
-    def first(id_or_selector = nil, options = {})
-      unless id_or_selector.nil? or Hash === id_or_selector
-        id_or_selector = BSON::ObjectId[id_or_selector]
-      end
-      options = { :transformer => lambda {|doc| self.new(doc)} }.update(options)
-      collection.find_one(id_or_selector, options)
-    end
-    
-    def find(selector = {}, options = {}, &block)
-      options = { :transformer => lambda {|doc| self.new(doc)} }.update(options)
-      collection.find(selector, options, &block)
-    end
-    
-    def find_by_ids(object_ids, query = {}, options = {})
-      find({:_id => {'$in' => object_ids}}.update(query), options)
-    end
-    
-    def find_ordered_ids(object_ids, query = {}, options = {})
-      indexed = find_by_ids(object_ids, query, options).inject({}) do |hash, object|
-        hash[object.id] = object
-        hash
-      end
-      
-      object_ids.map { |id| indexed[id] }
-    end
-    
-    def paginate_ids(object_ids, paginate_options, options = {})
-      object_ids.paginate(paginate_options).tap do |collection|
-        collection.replace find_ordered_ids(collection, {}, options)
-      end
-    end
-    
-    def many(property, *args, &block)
-      proxy_class = block_given?? Class.new(ManyProxy, &block) : ManyProxy
-      ivar = "@#{property}"
-      
-      define_method(property) {
-        (instance_variable_defined?(ivar) && instance_variable_get(ivar)) ||
-          instance_variable_set(ivar, proxy_class.new(self, property, *args))
-      }
-    end
+    define_method(property) {
+      (instance_variable_defined?(ivar) && instance_variable_get(ivar)) ||
+        instance_variable_set(ivar, proxy_class.new(self, property, *args))
+    }
   end
   
   include Module.new {
