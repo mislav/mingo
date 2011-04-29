@@ -25,6 +25,7 @@ class Mingo < Hashie::Dash
   autoload :Callbacks,    'mingo/callbacks'
   autoload :Changes,      'mingo/changes'
   autoload :Timestamps,   'mingo/timestamps'
+  autoload :Pagination,   'mingo/pagination'
   
   extend Connection
   extend Finders
