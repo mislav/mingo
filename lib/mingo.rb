@@ -206,6 +206,58 @@ if $0 == __FILE__
       cursor.should respond_to(:empty?)
     end
     
+    context "cursor reverse" do
+      it "can't reverse no order" do
+        lambda {
+          described_class.find({}).reverse
+        }.should raise_error
+      end
+
+      it "reverses simple order" do
+        cursor = described_class.find({}, :sort => :name).reverse
+        cursor.order.should == [[:name, -1]]
+      end
+
+      it "reverses simple desc order" do
+        cursor = described_class.find({}, :sort => [:name, :desc]).reverse
+        cursor.order.should == [[:name, 1]]
+      end
+
+      it "reverses simple nested desc order" do
+        cursor = described_class.find({}, :sort => [[:name, :desc]]).reverse
+        cursor.order.should == [[:name, 1]]
+      end
+
+      it "can't reverse complex order" do
+        lambda {
+          described_class.find({}, :sort => [[:name, :desc], [:other, :asc]]).reverse
+        }.should raise_error
+      end
+
+      it "reverses find by ids" do
+        cursor = described_class.find([1,3,5]).reverse
+        cursor.selector.should == {:_id => {"$in" => [5,3,1]}}
+      end
+    end
+    
+    context "find by ids" do
+      before :all do
+        @docs = [create, create, create]
+        @doc1, @doc2, @doc3 = *@docs
+      end
+
+      it "orders results by ids" do
+        results = described_class.find([@doc3.id, @doc1.id, @doc2.id]).to_a
+        results.should == [@doc3, @doc1, @doc2]
+      end
+
+      it "handles limit + skip" do
+        cursor = described_class.find([@doc3.id, @doc1.id, @doc2.id]).limit(1).skip(2)
+        cursor.to_a.should == [@doc2]
+        cursor.selector[:_id]["$in"].should == [@doc2.id]
+      end
+    end
+    
     def build(*args)
       described_class.new(*args)
     end

@@ -27,5 +27,75 @@ class Mingo
     def empty?
       !has_next?
     end
+    
+    def by_ids?
+      Hash === selector[:_id] && selector[:_id]["$in"]
+    end
+    
+    def next_document
+      if !@query_run && by_ids? && !order
+        limit_ids
+        preload_cache
+        sort_cache_by_ids
+      end
+      super
+    end
+    
+    def reverse
+      check_modifiable
+      if by_ids? and !order
+        selector[:_id]["$in"] = selector[:_id]["$in"].reverse
+        self
+      elsif order && (!(Array === order) || !(Array === order.first) || order.size == 1)
+        if Array === order
+          field, dir = *order.flatten
+          dir = Mongo::Conversions::ASCENDING_CONVERSION.include?(dir.to_s) ? -1 : 1
+        else
+          field = order
+          dir = -1
+        end
+        sort(field, dir)
+      else
+        raise "can't reverse complex query"
+      end
+    end
+    
+    private
+    
+    def limit_ids
+      if @limit > 0 || @skip > 0
+        ids = selector[:_id]["$in"]
+        selector[:_id]["$in"] = ids[@skip, @limit > 0 ? @limit : ids.size]
+        @skip = 0
+      end
+    end
+    
+    def preload_cache
+      begin
+        refresh
+      end until @cursor_id.zero? || closed? || @n_received.to_i < 1
+    end
+    
+    def sort_cache_by_ids
+      ids = selector[:_id]["$in"]
+      results = []
+      
+      index = @cache.inject({}) do |all, doc|
+        if doc["$err"]
+          results << doc
+        else
+          all[doc["_id"]] = doc
+        end
+        all
+      end
+      
+      ids.each do |id|
+        if doc = index[id]
+          results << doc
+        end
+      end
+      
+      @cache = results
+    end
   end
 end

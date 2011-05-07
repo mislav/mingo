@@ -71,8 +71,8 @@ class Mingo
       !!@loaded
     end
     
-    def find_by_ids(ids)
-      @model.find_by_ids(ids, {}, find_options)
+    def find(selector = {}, options = {}, &block)
+      @model.find(selector, find_options.merge(options), &block)
     end
     
     def respond_to?(method, priv = false)
@@ -152,7 +152,7 @@ class Mingo
   
     def load_collection
       @loaded ||= if self.object_ids.empty? then []
-      else find_by_ids(self.object_ids)
+      else find(self.object_ids)
       end
     end
   

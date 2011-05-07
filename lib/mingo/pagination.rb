@@ -19,7 +19,6 @@ class Mingo
       def wp_query(options, pager, args)
         self.limit pager.per_page
         self.skip pager.offset
-        self.sort options[:sort]
         pager.replace self.to_a
         pager.total_entries = self.count unless pager.total_entries
       end
