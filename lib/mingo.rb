@@ -254,7 +254,12 @@ if $0 == __FILE__
       it "handles limit + skip" do
         cursor = described_class.find([@doc3.id, @doc1.id, @doc2.id]).limit(1).skip(2)
         cursor.to_a.should == [@doc2]
-        cursor.selector[:_id]["$in"].should == [@doc2.id]
+      end
+
+      it "returns correct count" do
+        cursor = described_class.find([@doc3.id, @doc1.id, @doc2.id]).limit(1).skip(2)
+        cursor.next_document
+        cursor.count.should == 3
       end
     end
     

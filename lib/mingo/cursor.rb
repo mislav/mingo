@@ -34,9 +34,10 @@ class Mingo
     
     def next_document
       if !@query_run && by_ids? && !order
-        limit_ids
-        preload_cache
-        sort_cache_by_ids
+        limit_ids do
+          preload_cache
+          sort_cache_by_ids
+        end
       end
       super
     end
@@ -65,8 +66,17 @@ class Mingo
     def limit_ids
       if @limit > 0 || @skip > 0
         ids = selector[:_id]["$in"]
+        old_skip = @skip
         selector[:_id]["$in"] = ids[@skip, @limit > 0 ? @limit : ids.size]
         @skip = 0
+        begin
+          yield
+        ensure
+          @skip = old_skip
+          selector[:_id]["$in"] = ids
+        end
+      else
+        yield
       end
     end
     
