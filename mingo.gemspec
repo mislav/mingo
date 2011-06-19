@@ -2,8 +2,7 @@
 
 Gem::Specification.new do |gem|
   gem.name    = 'mingo'
-  gem.version = '0.3.1'
-  gem.date    = Time.now.strftime('%Y-%m-%d')
+  gem.version = '0.3.2'
   
   gem.add_dependency 'mongo', '>= 1.3'
   gem.add_dependency 'hashie', '>= 0.4.0'
@@ -14,8 +13,6 @@ Gem::Specification.new do |gem|
   gem.authors  = ['Mislav Marohnić']
   gem.email    = 'mislav.marohnic@gmail.com'
   gem.homepage = 'http://github.com/mislav/mingo'
-  
-  gem.rubyforge_project = nil
   
   gem.files = Dir['Rakefile', '{bin,lib,test,spec}/**/*', 'README*', 'LICENSE*'] & `git ls-files -z`.split("\0")
 end
