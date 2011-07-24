@@ -5,7 +5,6 @@ Gem::Specification.new do |gem|
   gem.version = '0.3.2'
   
   gem.add_dependency 'mongo', '>= 1.3'
-  gem.add_dependency 'hashie', '>= 0.4.0'
   
   gem.summary = "Minimal Mongo"
   gem.description = "Mingo is a minimal document-object mapper for MongoDB."

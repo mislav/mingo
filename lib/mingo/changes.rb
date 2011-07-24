@@ -10,20 +10,20 @@ class Mingo
       @changes = {}
       super
     end
+
+    def []=(key, value)
+      record_change(key, value)
+      super
+    end
     
     def changed?
       changes.any?
     end
     
     private
-    
-    def _regular_writer(key, value)
-      track_change(key, value)
-      super
-    end
 
-    def track_change(key, value)
-      old_value = _regular_reader(key)
+    def record_change(key, value)
+      old_value = self[key]
       unless value == old_value
         memo = (changes[key.to_sym] ||= [old_value])
         memo[0] == value ? changes.delete(key.to_sym) : (memo[1] = value)
@@ -33,8 +33,6 @@ class Mingo
     def clear_changes
       changes.clear
     end
-    
-    private
     
     def values_for_update
       changes.inject('$set' => {}, '$unset' => {}) do |doc, (key, values)|

@@ -1,4 +1,16 @@
 class Mingo
+  module Many
+    def many(property, *args, &block)
+      proxy_class = block_given?? Class.new(ManyProxy, &block) : ManyProxy
+      ivar = "@#{property}"
+
+      define_method(property) {
+        (instance_variable_defined?(ivar) && instance_variable_get(ivar)) ||
+        instance_variable_set(ivar, proxy_class.new(self, property, *args))
+      }
+    end
+  end
+
   class ManyProxy
     def self.decorate_with(mod = nil, &block)
       if mod or block_given?
