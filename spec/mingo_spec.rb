@@ -6,6 +6,10 @@ Mingo.connect('mingo')
 class User < Mingo
   property :name
   property :age
+
+  def age=(value)
+    super(value.nil? ? nil : value.to_i)
+  end
 end
 
 describe User do
@@ -75,6 +79,12 @@ describe User do
       doc.should_not have_key('age')
       doc.should have_key('name')
     end
+  end
+
+  it "supports overloading the setter method" do
+    user = build
+    user.age = '12'
+    user.age.should == 12
   end
   
   context "existing doc" do

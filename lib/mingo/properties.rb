@@ -11,12 +11,13 @@ class Mingo
     module ClassMethods
       attr_reader :properties
 
-      def property(name, options = {})
+      def property(name, options = nil)
         self.properties << name.to_sym
 
         setter_name = "#{name}="
         unless method_defined?(setter_name)
-          class_eval <<-RUBY, __FILE__, __LINE__
+          methods = Module.new
+          methods.module_eval <<-RUBY, __FILE__, __LINE__ + 1
             def #{name}(&block)
               self.[](#{name.to_s.inspect}, &block)
             end
@@ -25,6 +26,7 @@ class Mingo
               self.[]=(#{name.to_s.inspect}, value)
             end
           RUBY
+          include methods
         end
 
         if defined? @subclasses
