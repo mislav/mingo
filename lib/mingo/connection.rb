@@ -3,7 +3,11 @@ class Mingo
     attr_writer :db, :collection
     
     def db
-      @db || superclass.db
+      (defined?(@db) && @db) or superclass.respond_to?(:db) ? superclass.db : nil
+    end
+
+    def connected?
+      !!db
     end
     
     def connect(dbname_or_uri)

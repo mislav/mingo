@@ -16,7 +16,22 @@ describe User do
   before :all do
     User.collection.remove
   end
-  
+
+  it "has connection" do
+    Mingo.should be_connected
+    User.should be_connected
+
+    old_db = Mingo.db
+    Mingo.db = nil
+    begin
+      Mingo.should_not be_connected
+      User.should_not be_connected
+      User.db.should be_nil
+    ensure
+      Mingo.db = old_db
+    end
+  end
+
   it "obtains an ID by saving" do
     user = build :name => 'Mislav'
     user.should_not be_persisted
