@@ -32,16 +32,6 @@ class Mingo
       Hash === selector[:_id] && selector[:_id]["$in"]
     end
     
-    def next_document
-      if !@query_run && by_ids? && !order
-        limit_ids do
-          preload_cache
-          sort_cache_by_ids
-        end
-      end
-      super
-    end
-    
     def reverse
       check_modifiable
       if by_ids? and !order
@@ -62,6 +52,19 @@ class Mingo
     end
     
     private
+
+    alias refresh_without_sorting refresh
+
+    def refresh
+      if !@query_run && by_ids? && !order
+        limit_ids do
+          preload_cache
+          sort_cache_by_ids
+        end
+      else
+        refresh_without_sorting
+      end
+    end
     
     def limit_ids
       if @limit > 0 || @skip > 0
@@ -82,7 +85,7 @@ class Mingo
     
     def preload_cache
       begin
-        refresh
+        refresh_without_sorting
       end until @cursor_id.zero? || closed? || @n_received.to_i < 1
     end
     
