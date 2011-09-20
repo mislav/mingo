@@ -220,7 +220,24 @@ describe User do
       results.should be_empty
     end
   end
-  
+
+  context "cache_key" do
+    it "has it" do
+      build.cache_key.should == "users/new"
+    end
+
+    it "includes the ID if persisted" do
+      user = create
+      user.cache_key.should == "users/#{user.id}"
+    end
+
+    it "includes the timestamp if present" do
+      user = create
+      user['updated_at'] = Time.utc_time 2011, 12, 13, 14, 15, 16
+      user.cache_key.should == "users/#{user.id}-20111213141516"
+    end
+  end
+
   def build(*args)
     described_class.new(*args)
   end

@@ -102,6 +102,10 @@ class Mingo
       counter_cache
     end
 
+    def cache_key
+      [@parent, @property, counter_cache]
+    end
+
     private
   
     def method_missing(method, *args, &block)

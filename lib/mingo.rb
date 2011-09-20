@@ -54,4 +54,15 @@ class Mingo < Hash
   def ==(other)
     other.is_a?(self.class) and other.id == self.id
   end
+
+  def cache_key
+    model_key = self.class.model_name.cache_key
+    if not persisted?
+      "#{model_key}/new"
+    elsif timestamp = self['updated_at']
+      "#{model_key}/#{id}-#{timestamp.utc.strftime("%Y%m%d%H%M%S")}"
+    else
+      "#{model_key}/#{id}"
+    end
+  end
 end
