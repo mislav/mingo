@@ -70,7 +70,7 @@ class Mingo
       if @limit > 0 || @skip > 0
         ids = selector[:_id]["$in"]
         old_skip = @skip
-        selector[:_id]["$in"] = ids[@skip, @limit > 0 ? @limit : ids.size]
+        selector[:_id]["$in"] = Array(ids[@skip, @limit > 0 ? @limit : ids.size])
         @skip = 0
         begin
           yield

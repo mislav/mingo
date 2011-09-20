@@ -200,10 +200,24 @@ describe User do
       cursor.to_a.should == [@doc2]
     end
 
+    it "doesn't die when offset is out of bounds" do
+      cursor = described_class.find([@doc3.id, @doc1.id, @doc2.id]).skip(4)
+      cursor.to_a.should be_empty
+    end
+
     it "returns correct count" do
       cursor = described_class.find([@doc3.id, @doc1.id, @doc2.id]).limit(1).skip(2)
-      cursor.next_document
       cursor.count.should == 3
+    end
+
+    it "works with empty ID list" do
+      results = described_class.find([]).to_a
+      results.should be_empty
+    end
+
+    it "works with nonexistent ID" do
+      results = described_class.find([BSON::ObjectId.new]).to_a
+      results.should be_empty
     end
   end
   
