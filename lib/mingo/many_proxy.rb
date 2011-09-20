@@ -82,6 +82,11 @@ class Mingo
     def loaded?
       !!@loaded
     end
+
+    def reload
+      @loaded = @join_loaded = nil
+      self
+    end
     
     def find(selector = {}, options = {}, &block)
       @model.find(selector, find_options.merge(options), &block)
