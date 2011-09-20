@@ -10,13 +10,13 @@ class Mingo
       !!db
     end
     
-    def connect(dbname_or_uri)
+    def connect(dbname_or_uri, options = {})
       self.collection = nil
       self.db = if dbname_or_uri.index('mongodb://') == 0
-        connection = Mongo::Connection.from_uri(dbname_or_uri)
+        connection = Mongo::Connection.from_uri(dbname_or_uri, options)
         connection.db(connection.auths.last['db_name'])
       else
-        Mongo::Connection.new.db(dbname_or_uri)
+        Mongo::Connection.new(nil, nil, options).db(dbname_or_uri)
       end
     end
     
