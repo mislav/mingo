@@ -95,7 +95,13 @@ class Mingo
     def respond_to?(method, priv = false)
       super || method_missing(:respond_to?, method, priv)
     end
-  
+
+    def reset_counter_cache
+      delta = join_cursor.count - counter_cache
+      change_counter_cache delta
+      counter_cache
+    end
+
     private
   
     def method_missing(method, *args, &block)
