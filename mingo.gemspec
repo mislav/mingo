@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |gem|
   gem.name    = 'mingo'
-  gem.version = '0.4.3'
+  gem.version = '0.4.4'
   
   gem.add_dependency 'mongo', '>= 1.3'
   
