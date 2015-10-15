@@ -14,7 +14,8 @@ class Mingo
       self.collection = nil
       self.db = if dbname_or_uri.index('mongodb://') == 0
         connection = Mongo::Connection.from_uri(dbname_or_uri, options)
-        connection.db(connection.auths.last['db_name'])
+        auth = connection.auths.first
+        connection.db(auth.fetch(:db_name) { auth.fetch("db_name") })
       else
         Mongo::Connection.new(nil, nil, options).db(dbname_or_uri)
       end
