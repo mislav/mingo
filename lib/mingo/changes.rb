@@ -35,9 +35,15 @@ class Mingo
     end
     
     def values_for_update
-      changes.inject('$set' => {}, '$unset' => {}) do |doc, (key, values)|
+      changes.inject({}) do |doc, (key, values)|
         value = values[1]
-        value.nil? ? (doc['$unset'][key] = 1) : (doc['$set'][key] = value)
+        if value
+          doc['$set'] ||= {}
+          doc['$set'][key] = value
+        else
+          doc['$unset'] ||= {}
+          doc['$unset'][key] = 1
+        end
         doc
       end
     end

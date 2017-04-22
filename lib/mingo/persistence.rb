@@ -25,7 +25,7 @@ class Mingo
     def save(options = {})
       if persisted?
         hash = values_for_update
-        unless %w[$set $unset] == hash.keys && hash.values.all? { |v| v.empty? }
+        unless hash.empty?
           update(hash, options)
         end
       else
