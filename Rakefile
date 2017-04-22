@@ -1,5 +1,5 @@
 task :default => :spec
 
 task :spec do
-  exec *%w[bundle exec ruby -Ilib lib/mingo.rb --color]
+  exec *%w[bundle exec rspec spec]
 end
