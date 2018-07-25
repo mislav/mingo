@@ -12,6 +12,7 @@ Gem::Specification.new do |gem|
   gem.authors  = ['Mislav Marohnić']
   gem.email    = 'mislav.marohnic@gmail.com'
   gem.homepage = 'http://github.com/mislav/mingo'
+  gem.licenses = ['MIT']
   
   gem.files = Dir['Rakefile', '{bin,lib,test,spec}/**/*', 'README*', 'LICENSE*'] & `git ls-files -z`.split("\0")
 end
