@@ -1,5 +1,11 @@
-require 'rspec/autorun'
+require 'rspec'
 require 'mingo'
+
+RSpec.configure do |config|
+  config.expect_with :rspec do |expectations|
+    expectations.syntax = :should
+  end
+end
 
 Mingo.connect('mingo')
 
@@ -154,7 +160,7 @@ describe User do
     it "can't reverse no order" do
       lambda {
         described_class.find({}).reverse
-      }.should raise_error
+      }.should raise_error(RuntimeError)
     end
 
     it "reverses simple order" do
@@ -175,7 +181,7 @@ describe User do
     it "can't reverse complex order" do
       lambda {
         described_class.find({}, :sort => [[:name, :desc], [:other, :asc]]).reverse
-      }.should raise_error
+      }.should raise_error(RuntimeError)
     end
 
     it "reverses find by ids" do
@@ -233,7 +239,7 @@ describe User do
 
     it "includes the timestamp if present" do
       user = create
-      user['updated_at'] = Time.utc_time 2011, 12, 13, 14, 15, 16
+      user['updated_at'] = Time.utc 2011, 12, 13, 14, 15, 16
       user.cache_key.should == "users/#{user.id}-20111213141516"
     end
   end
