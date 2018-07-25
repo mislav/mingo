@@ -40,6 +40,7 @@ class Mingo
     def reload
       doc = self.class.first(id, :transformer => nil)
       replace doc
+      self
     end
 
     def destroy

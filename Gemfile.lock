@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    mingo (0.4.5)
+    mingo (0.5.0)
       mongo (>= 1.3, < 2.0)
 
 GEM

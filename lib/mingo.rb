@@ -12,9 +12,10 @@ BSON::ObjectId.class_eval do
   end
 end
 
-class Mingo < Hash
+class Mingo
   include ActiveModel::Conversion
   extend ActiveModel::Translation
+  extend ActiveModel::Naming
   
   autoload :Properties,   'mingo/properties'
   autoload :Cursor,       'mingo/cursor'
@@ -52,7 +53,7 @@ class Mingo < Hash
   end
   
   def ==(other)
-    other.is_a?(self.class) and other.id == self.id
+    other.is_a?(Mingo) && other.id == self.id
   end
 
   def cache_key

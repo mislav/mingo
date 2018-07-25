@@ -41,6 +41,11 @@ class Mingo
       end
     end
 
+    def initialize(*)
+      super
+      @_data = {}
+    end
+
     def inspect
       str = "<##{self.class.to_s}"
       str << self.class.properties.map { |p| " #{p}=#{self.send(p).inspect}" }.join('')
@@ -48,19 +53,25 @@ class Mingo
     end
 
     def [](field, &block)
-      super(field.to_s, &block)
+      @_data.send(:[], field, &block)
     end
 
     def []=(field, value)
-      super(field.to_s, value)
+      @_data[field] = value
     end
 
     def to_hash
-      Hash.new.replace(self)
+      @_data.dup
     end
 
-    # keys are already strings
-    def stringify_keys!() self end
-    def stringify_keys() stringify_keys!.dup end
+    def merge!(other)
+      @_data.merge!(other.to_hash)
+      self
+    end
+
+    def replace(other)
+      @_data.replace(other.to_hash)
+      self
+    end
   end
 end
