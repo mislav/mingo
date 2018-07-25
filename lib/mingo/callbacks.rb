@@ -4,16 +4,19 @@ class Mingo
       base.extend ActiveModel::Callbacks
       base.send :define_model_callbacks, :create, :save, :update, :destroy
     end
-    
+
     def save(*args)
-      action = persisted? ? 'update' : 'create'
-      send(:"_run_#{action}_callbacks") do
-        _run_save_callbacks { super }
+      run_callbacks(persisted? ? :update : :create) do
+        run_callbacks(:save) do
+          super
+        end
       end
     end
 
     def destroy
-      _run_destroy_callbacks { super }
+      run_callbacks(:destroy) do
+        super
+      end
     end
   end
 end
